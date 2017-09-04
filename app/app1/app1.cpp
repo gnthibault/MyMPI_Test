@@ -15,7 +15,7 @@ int main(int argc, char* argv[]) {
   T lowBound=0, upBound=1;
 
   // Init mpi and monitor runtime
-  boost::mpi::environment env;
+  /*boost::mpi::environment env;
   boost::mpi::communicator world;
   boost::mpi::timer timer;
 
@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
       << approx << std::endl;
     std::cout << "Elapsed time " << std::setprecision(6)
       << timer.elapsed() << "s" << std::endl;
-  }
+  }*/
 
   return EXIT_SUCCESS;
 }

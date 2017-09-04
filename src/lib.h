@@ -5,14 +5,6 @@
 #include <numeric>
 #include <iomanip>
 
-//Boost
-#include <boost/iterator/transform_iterator.hpp>
-#include <boost/iterator/counting_iterator.hpp>
-#include <collectives.hpp>
-#include <communicator.hpp>
-#include <environment.hpp>
-#include <timer.hpp>
-
 /** \struct Integrator
  * \brief operator to be mapped over a range before composing with
  * the range accumulator
@@ -46,9 +38,9 @@ public:
   NumericalMidPointIntegrator1D(T lowerBound, T upperBound, uint64_t nbSteps):
     m_lowerBound(lowerBound), m_upperBound(upperBound),
     m_nbSteps(nbSteps) {
-      m_chunkSize = (m_nbSteps+m_world.size()-1ul)/m_world.size();
+      m_chunkSize = (m_nbSteps+/*m_world.size()*/1-1ul)/1/*m_world.size()*/;
       m_gridRes = (m_upperBound-m_lowerBound)/m_nbSteps;
-      m_firstIndex = m_world.rank()*m_chunkSize;
+      m_firstIndex = /*m_world.rank()*/1*m_chunkSize;
       m_lastIndex = std::min(m_firstIndex+m_chunkSize,m_nbSteps);
     }
 
@@ -70,17 +62,10 @@ public:
     // Define the midpoint functor
     Integrator<T,F> op(m_gridRes,m_lowerBound,f);
 
-    sum = std::accumulate(
-      boost::make_transform_iterator(
-        boost::make_counting_iterator<uint64_t>(m_firstIndex), op),
-      boost::make_transform_iterator(
-        boost::make_counting_iterator<uint64_t>(m_lastIndex), op),
-      0.0, std::plus<T>());
-
     lIntVal = sum*m_gridRes;
 
     // Reduce over all ranks the value of the integral
-    boost::mpi::reduce(m_world, lIntVal, gIntVal, std::plus<T>(), 0);
+    //boost::mpi::reduce(m_world, lIntVal, gIntVal, std::plus<T>(), 0);
 
     return gIntVal;
   }
@@ -108,5 +93,5 @@ protected:
   uint64_t m_lastIndex; 
  
   /// MPI related communication handler
-  boost::mpi::communicator m_world;
+  //boost::mpi::communicator m_world;
 };

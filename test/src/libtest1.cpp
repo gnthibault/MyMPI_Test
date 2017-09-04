@@ -14,18 +14,18 @@ int main(int argc, char* argv[]) {
   T lowBound=0, upBound=1;
 
   // Init mpi and monitor runtime
-  boost::mpi::environment env;
+  /*boost::mpi::environment env;
   boost::mpi::communicator world;
-  boost::mpi::timer timer;
+  boost::mpi::timer timer;*/
 
   // Actually run computations
   NumericalMidPointIntegrator1D<T> n(lowBound,upBound,nbSteps);
   auto approx = n.Integrate(f);
   
   // Print out pi value and time elapsed since beginning
-  if (world.rank() == 0) {
+  /*if (world.rank() == 0) {
     assert(std::abs(approx-M_PI)<1.0e-12);
-  }
+  }*/
 
   return EXIT_SUCCESS;
 }

@@ -93,21 +93,6 @@ endif ()
 # /MPI Part #
 #############
 
-###############
-# Boost part  #
-###############
-find_package(Boost COMPONENTS mpi serialization) 
-if (Boost_FOUND)
-  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/mpi/include)#tmp
-  include_directories(${Boost_INCLUDE_DIRS})
-  link_directories(${Boost_LIBRARY_DIRS})
-  #runtime libs for boost
- set(boost_deps mboost_mpi boost_serialization) #tmp
-endif ()
-################
-# /Boost part  #
-################
-
 #############
 #  Testing  #
 #############
@@ -147,12 +132,7 @@ GENERATE_CPPCHECK(SOURCEDIRS src app test
 #  Adding various code directories  #
 #####################################
 
-add_subdirectory(mpi)
 add_subdirectory(src)
 add_subdirectory(app)
 add_subdirectory(test)
 add_subdirectory(scripts)
-
-if (USE_REPORT)
-  add_subdirectory(report)
-endif ()

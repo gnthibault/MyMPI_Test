@@ -31,8 +31,7 @@ add_executable(${OUTPUT_NAME} ${sources})
 
 target_link_libraries(${OUTPUT_NAME}
   lib
-  ${mpi_deps}
-  ${boost_deps})
+  ${mpi_deps})
 
 set_property(TARGET ${OUTPUT_NAME}
   PROPERTY OUTPUT_NAME ${OUTPUT_NAME})

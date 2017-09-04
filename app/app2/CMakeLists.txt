@@ -32,7 +32,6 @@ cuda_add_executable(${OUTPUT_NAME} ${sources})
 target_link_libraries(${OUTPUT_NAME}
   lib
   ${mpi_deps}
-  ${boost_deps}
   ${cuda_deps})
 
 set_property(TARGET ${OUTPUT_NAME}
