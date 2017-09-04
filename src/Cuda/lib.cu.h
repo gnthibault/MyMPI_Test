@@ -57,7 +57,7 @@ public:
     lIntVal = sum*this->m_gridRes;
 
     // Reduce over all ranks the value of the integral
-    boost::mpi::reduce(this->m_world, lIntVal, gIntVal, std::plus<T>(), 0);
+    //boost::mpi::reduce(this->m_world, lIntVal, gIntVal, std::plus<T>(), 0);
 
     return gIntVal;
   }
