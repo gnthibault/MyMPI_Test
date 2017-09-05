@@ -16,6 +16,9 @@
 
 using T = int;
 int nbRequest = 10;
+int SERVER_ID=0;
+int REQUEST_TAG=5555;
+int RESULT_TAG=5556;
 
 void provideWorkToNode(
     std::vector<T>& vRequest,
@@ -24,35 +27,88 @@ void provideWorkToNode(
     std::vector<T>& vResult,
     int64_t& resultCounter,
     std::mutex& resultMutex,
+    int world_rank,
     int nodeId) {
 
   size_t loopIdx=0;
   while (true) {
-
-    // Now one can wait for incomming results
-    if (loopIdx>0) {
-      // Handling output safely
-      std::lock_guard<std::mutex> guard(resultMutex);
-      if (resultCounter<vResult.size()) {
-        //TODO: add blocking recv call from rank nodeId
-        vResult.at(resultCounter)=resultCounter;
-        resultCounter++;
-      } else {
-        //TODO: throw error properly
-        std::cout<<"This error should not arise !"<<std::endl;
-        return;  
+    if (world_rank == SERVER_ID) {
+      int lRequestCounter;
+      {
+        // Handling input safely
+        std::lock_guard<std::mutex> guard(requestMutex);
+        if (requestCounter<vRequest.size()) {
+          lRequestCounter=requestCounter;
+          requestCounter++;
+        } else {
+          return;
+        }
       }
-    }
+      //TODO request counter is not very useful
+      vRequest.at(lRequestCounter)=lRequestCounter;
+      //TODO : do the actual work
+     
+      int lResultCounter;
+      {
+        // Handling output safely
+        std::lock_guard<std::mutex> guard(resultMutex);
+        if (resultCounter<vResult.size()) {
+          lResultCounter=resultCounter;
+          resultCounter++;
+        } else {
+          //TODO: throw error properly
+          //std::cout<<"This error should not arise !"<<std::endl;
+          return;  
+        }
+      }
+      //TODO : write the actual result
+      vResult.at(lResultCounter)=lResultCounter;
+    } else {
+      // Now one can wait for incomming results
+      if (loopIdx>0) {
+        int lResultCounter;
+        {
+          // Handling output safely
+          std::lock_guard<std::mutex> guard(resultMutex);
+          if (resultCounter<vResult.size()) {
+            lResultCounter=resultCounter;
+            resultCounter++;
+          } else {
+            //TODO: throw error properly
+            //std::cout<<"This error should not arise !"<<std::endl;
+            return;  
+          }
+        }
+        int result;
+        MPI_Recv(&result, 1, MPI_INT, nodeId, RESULT_TAG,
+          MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        std::cout<<"Thread: mpi result has been received"<<std::endl;
+        //TODO : write the actual result
+        vResult.at(lResultCounter)=lResultCounter;
+      }
 
-    // Handling input safely
-    {
-      std::lock_guard<std::mutex> guard(requestMutex);
-      if (requestCounter<vRequest.size()) {
-        //TODO: add blocking send call to rank nodeId
-        vRequest.at(requestCounter)=requestCounter;
-        requestCounter++;
-      } else {
-        //TODO: add blocking void send call to rank nodeId
+      int status;
+      int lRequestCounter;
+      {
+        // Handling input safely
+        std::lock_guard<std::mutex> guard(requestMutex);
+        if (requestCounter<vRequest.size()) {
+          status=1;
+          //std::cout<<"Thread: mpi request has been sent"<<std::endl;
+          lRequestCounter=requestCounter;
+          requestCounter++;
+        } else {
+          status=0;
+          std::cout<<"Thread: void mpi request will be sent"<<std::endl;
+        }
+      }
+
+      //TODO cRequest is not very useful, can be deleted
+      vRequest.at(lRequestCounter)=lRequestCounter;
+      int request[2]={0,status};
+      MPI_Send(&request, 2, MPI_INT, nodeId, REQUEST_TAG,
+        MPI_COMM_WORLD);
+      if (status==0) {
         return;
       }
     }
@@ -80,8 +136,8 @@ int main(int argc, char* argv[]) {
   int64_t resultCounter=0;
   std::mutex resultMutex;
 
-  if (world_rank == 0) {
-    //Launch a group of threads: 1 per node
+  if (world_rank == SERVER_ID) {
+    //Launch a group of threads: 1 per node, except the server node
     for (int i=0; i < world_size; ++i) {
       lThreads.emplace_back(
         provideWorkToNode,
@@ -91,20 +147,32 @@ int main(int argc, char* argv[]) {
         std::ref(vResult),
         std::ref(resultCounter),
         std::ref(resultMutex),
+        world_rank,
         i);
     }
-  }
+  } else {
+    bool isNext = true;
+    while (isNext) {
+      //TODO: blocking wait for a request (of unknown size) from rank 0
+      int request[2];
+      std::cout<<"Node: mpi request: waiting to  receive"<<std::endl;
+      MPI_Recv(&request, 2, MPI_INT, SERVER_ID, REQUEST_TAG,
+        MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      std::cout<<"Node: mpi request has been received"<<std::endl;
+    
 
-  bool isNext = true;
-  while (isNext) {
-    //TODO: blocking wait for a request (of unknown size) from rank 0
-  
-    T status = 0;
-    if (status!=0) { 
-      //TODO: compute result
-      //TODO: sending result to rank 0
-    } else {
-      isNext=false;
+      T status = request[1];
+      if (status!=0) { 
+        //TODO: compute result
+        int result = 0;
+        //TODO: sending result to rank 0
+        std::cout<<"Node: mpi result waiting to be send"<<std::endl;
+        MPI_Send(&result, 1, MPI_INT, SERVER_ID, RESULT_TAG,
+          MPI_COMM_WORLD);
+        std::cout<<"Node: mpi result has been sent"<<std::endl;
+      } else {
+        isNext=false;
+      }
     }
   }
 
