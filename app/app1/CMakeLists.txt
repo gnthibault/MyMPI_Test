@@ -31,7 +31,8 @@ add_executable(${OUTPUT_NAME} ${sources})
 
 target_link_libraries(${OUTPUT_NAME}
   lib
-  ${mpi_deps})
+  ${mpi_deps}
+  ${CMAKE_THREAD_LIBS_INIT})
 
 set_property(TARGET ${OUTPUT_NAME}
   PROPERTY OUTPUT_NAME ${OUTPUT_NAME})

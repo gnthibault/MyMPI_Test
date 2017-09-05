@@ -17,6 +17,8 @@ list(APPEND CMAKE_MODULE_PATH ${PRJ_CMAKE_DIR})
 #local ref
 set(PRJ_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
+find_package(Threads REQUIRED)
+
 #################################
 #  Generic Compilation options  #
 #################################
