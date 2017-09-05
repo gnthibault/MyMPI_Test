@@ -1,23 +1,10 @@
-//Thrust
-#include <thrust/system_error.h>
-#include <thrust/host_vector.h>
-#include <thrust/device_vector.h>
-#include <thrust/functional.h>
-#include <thrust/fill.h>
-#include <thrust/transform.h>
-#include <thrust/inner_product.h>
-#include <thrust/random.h>
-#include <thrust/iterator/counting_iterator.h>
-
 // Local
-#include "lib.h"
-#include "Cuda/helper.cu.h"
 
-/** \class NumericalMidPointIntegrator1DCuda
+/** \struct ShortestPathRequest
  * \brief Performs numerical integration on a 1D domain using cuda
  *
  * \author Thibault Notargiacomo
- */
+ 
 template<typename T>
 class NumericalMidPointIntegrator1DCuda : public
   NumericalMidPointIntegrator1D<T> {
@@ -37,7 +24,7 @@ public:
    * \param[in] f the 1D scalar function to be integrated
    *
    * \return The value of the numerical integral
-   */
+   
   template<typename F>
   T Integrate(F f) {
     T lIntVal, gIntVal, sum = 0.0;
@@ -61,4 +48,4 @@ public:
 
     return gIntVal;
   }
-};
+};*/
