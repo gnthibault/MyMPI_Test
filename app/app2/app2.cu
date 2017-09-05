@@ -33,7 +33,7 @@ void provideWorkToNode(
     if (loopIdx>0) {
       // Handling output safely
       std::lock_guard<std::mutex> guard(resultMutex);
-      if (requestCounter<vRequest.size()) {
+      if (resultCounter<vResult.size()) {
         //TODO: add blocking recv call from rank nodeId
         vResult.at(resultCounter)=resultCounter;
         resultCounter++;
@@ -98,8 +98,14 @@ int main(int argc, char* argv[]) {
   bool isNext = true;
   while (isNext) {
     //TODO: blocking wait for a request (of unknown size) from rank 0
-   
-    //TODO: sending result to rank 0
+  
+    T status = 0;
+    if (status!=0) { 
+      //TODO: compute result
+      //TODO: sending result to rank 0
+    } else {
+      isNext=false;
+    }
   }
 
   /*const int MAX_NUMBERS = 100;
@@ -135,6 +141,7 @@ int main(int argc, char* argv[]) {
 
   // Synchronization
   MPI_Barrier(MPI_COMM_WORLD);
+
   if (world_rank==0) {
     auto print = [](T in) {
       std::cout<<in<<std::endl; };
