@@ -19,6 +19,8 @@
 //Local
 //#include <Cuda/lib.cu.h>
 
+using RequestType=std::vector<int>;
+using ResultType=std::vector<int>;
 
 int main(int argc, char* argv[]) {
   
@@ -31,7 +33,6 @@ int main(int argc, char* argv[]) {
     //Export start and end links to Hashmap
 
     //input data
-    using RequestType=std::vector<int>;
     DataHandler<RequestType> workQueue;
     std::vector<std::vector<int>> sortedRoutes(8,std::vector<int>(2,1));
 
@@ -61,23 +62,23 @@ int main(int argc, char* argv[]) {
   {
     while (true) {
       //TODO: blocking wait for a request (of unknown size) from rank 0
-      int request[2];
-      std::cout<<"Node: mpi request: waiting to  receive"<<std::endl;
+      RequestType request;
       MPI_Status status;
       MPI_Probe(CLIENT_ID, REQUEST_TAG, MPI_COMM_WORLD, &status);
       int reqSize;
       MPI_Get_count(&status, MPI_INT, &reqSize);
       if(reqSize > 0)
       {
-        MPI_Recv(&request, reqSize, MPI_INT, CLIENT_ID, REQUEST_TAG,
+        request.resize(reqSize);
+        MPI_Recv(request.data(), reqSize, MPI_INT, CLIENT_ID, REQUEST_TAG,
           MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         std::cout<<"Node: mpi request has been received"<<std::endl;
     
         //TODO: compute result
-        int result = 0;
-        //TODO: sending result to rank 0
+        ResultType result(10,1);
+
         std::cout<<"Node: mpi result waiting to be send"<<std::endl;
-        MPI_Send(&result, 1, MPI_INT, CLIENT_ID, RESULT_TAG,
+        MPI_Send(result.data(), result.size(), MPI_INT, CLIENT_ID, RESULT_TAG,
           MPI_COMM_WORLD);
         std::cout<<"Node: mpi result has been sent"<<std::endl;
       }
