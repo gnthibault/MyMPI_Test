@@ -15,82 +15,10 @@
 #include <vector>
 #include <map>
 
-//MPI
-#include <mpi.h>
 
 //Local
 //#include <Cuda/lib.cu.h>
 
-using T = int;
-int nbRequest = 10;
-const int SERVER_ID=0;
-int REQUEST_TAG=5555;
-int RESULT_TAG=5556;
-
-template<class T>
-class MPIWorkProvider
-{
-  DataHandler<T>& data;
-  int world_size;
-  std::vector<MPI_Request> resultReqs;
-  std::vector<std::pair<int, T> > reqData;
- 
-  bool sendWork(int rank)
-  {
-    const auto work = data.getWork();
-    MPI_Request req;
-    if(work.first == -1)
-    {
-      MPI_Isend(&nbRequest, 0, MPI_INT, rank, REQUEST_TAG, MPI_COMM_WORLD, &req);
-      // We do no need the handle to the above operation, because we will never MPI_Wait on it.
-      MPI_Request_free(&req);
-      resultReqs[rank-1] = MPI_REQUEST_NULL;
-      return false;
-    }
-    else
-    {
-      MPI_Isend(work.second, 1, MPI_INT, rank, REQUEST_TAG, MPI_COMM_WORLD, &req);
-      reqData[rank-1].first = work.first;
-      MPI_Irecv(&reqData[rank-1].second, 1, MPI_INT, rank, RESULT_TAG,
-        MPI_COMM_WORLD, &resultReqs[rank-1]);
-      MPI_Request_free(&req);
-      return true;
-    }
-  }
-
-  public:
-
-    MPIWorkProvider(DataHandler<T>& data) : data(data)
-  {
-    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-
-    resultReqs.resize(world_size-1);
-    reqData.resize(world_size-1);
-  }
-
-  void provide()
-  {
-
-    for(int a = 1; a < world_size; ++a)
-      std::cerr << sendWork(a) << '\n';
-
-    size_t loopIdx=0;
-    while (true) {
-
-      int index = 0;
-      std::cout << resultReqs.size() << std::endl;
-      std::cerr << "before wait any\n";
-      MPI_Waitany(resultReqs.size(), resultReqs.data(), &index, MPI_STATUS_IGNORE);
-      if(index == MPI_UNDEFINED)
-        break;
-
-      data.setResult(reqData[index].first, reqData[index].second);
-      std::cout << std::boolalpha << sendWork(index+1) << std::endl;
-
-      loopIdx++;
-    }
-  }
-};
 
 int main(int argc, char* argv[]) {
   
@@ -99,21 +27,35 @@ int main(int argc, char* argv[]) {
   int world_rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
-  if (world_rank == SERVER_ID) {
-    //Input data
-    DataHandler<T> data(nbRequest);
-    MPIWorkProvider<T> provider(data);
+  if(world_rank==CLIENT_ID){
+    //Export start and end links to Hashmap
+
+    //input data
+    using RequestType=std::vector<int>;
+    DataHandler<RequestType> workQueue;
+    std::vector<std::vector<int>> sortedRoutes(8,std::vector<int>(2,1));
+
+    std::for_each(sortedRoutes.cbegin(),sortedRoutes.cend(),
+                [&](const auto& request) {
+                  workQueue.push_back(RequestType(
+                     request.cbegin(),request.cend()));}
+    );
+
+    //Schedule Request to Servers
+    MPIWorkProvider<RequestType> provider(workQueue);
+    std::cout<<"Test 1"<<std::endl;
     provider.provide();
 
-    // Synchronization
+    //Synchronization
     MPI_Barrier(MPI_COMM_WORLD);
 
-    auto print = [](T in) {
+
+/*   auto print = [](T in) {
       std::cout<<in<<std::endl; };
     std::cout<<"Content of request: "<<std::endl;
     std::for_each(data.vWork().cbegin(), data.vWork().cend(), print);  
     std::cout<<"Content of result: "<<std::endl;
-    std::for_each(data.vResult().cbegin(), data.vResult().cend(), print);  
+    std::for_each(data.vResult().cbegin(), data.vResult().cend(), print);  */
   }
   else
   {
@@ -122,12 +64,12 @@ int main(int argc, char* argv[]) {
       int request[2];
       std::cout<<"Node: mpi request: waiting to  receive"<<std::endl;
       MPI_Status status;
-      MPI_Probe(SERVER_ID, REQUEST_TAG, MPI_COMM_WORLD, &status);
+      MPI_Probe(CLIENT_ID, REQUEST_TAG, MPI_COMM_WORLD, &status);
       int reqSize;
       MPI_Get_count(&status, MPI_INT, &reqSize);
       if(reqSize > 0)
       {
-        MPI_Recv(&request, reqSize, MPI_INT, SERVER_ID, REQUEST_TAG,
+        MPI_Recv(&request, reqSize, MPI_INT, CLIENT_ID, REQUEST_TAG,
           MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         std::cout<<"Node: mpi request has been received"<<std::endl;
     
@@ -135,7 +77,7 @@ int main(int argc, char* argv[]) {
         int result = 0;
         //TODO: sending result to rank 0
         std::cout<<"Node: mpi result waiting to be send"<<std::endl;
-        MPI_Send(&result, 1, MPI_INT, SERVER_ID, RESULT_TAG,
+        MPI_Send(&result, 1, MPI_INT, CLIENT_ID, RESULT_TAG,
           MPI_COMM_WORLD);
         std::cout<<"Node: mpi result has been sent"<<std::endl;
       }
