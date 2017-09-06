@@ -71,6 +71,7 @@ class MPIWorkProvider
       // We do no need the handle to the above operation, because we will never MPI_Wait on it.
       MPI_Request_free(&req);
       //m_resultReqs.at(rank-1) = MPI_REQUEST_NULL;
+      m_currentWorldSize--;
       return false;
     }
     else
@@ -104,6 +105,7 @@ public:
     MPIWorkProvider(DataHandler<T>& data) : m_data(data)
   {
     MPI_Comm_size(MPI_COMM_WORLD, &m_worldSize);
+    m_currentWorldSize=m_worldSize;
     m_resultReqs.resize(m_worldSize-1,MPI_REQUEST_NULL);
     for (int i=0;i<m_worldSize-1;++i){
       m_resultData.push_back(std::make_pair(0,std::unique_ptr<T>(new T(1))));
@@ -119,7 +121,7 @@ public:
       sendWork(a);
     }
 
-    while (true) {
+    while (m_currentWorldSize>1) {
       MPI_Status status;
       int flag;
       MPI_Iprobe(MPI_ANY_SOURCE, RESULT_TAG, MPI_COMM_WORLD, &flag, &status);
@@ -138,8 +140,7 @@ public:
         //copy to the result buffer
         m_data.setResult(m_resultData.at(rank-1).first,
           *m_resultData.at(rank-1).second);
-        if(!sendWork(rank))
-          break;
+        sendWork(rank);
       }
       
       /*std::cerr << "before wait any resultReqs size is "<<m_resultReqs.size()
@@ -157,7 +158,7 @@ public:
 private:
   DataHandler<T>& m_data;       //Thread-safe work queue
   int m_worldSize;             //number of ranks
-  
+  int m_currentWorldSize; 
   std::vector<MPI_Request> m_resultReqs; //List of asyncronous mpi events
   std::vector<std::pair<int, std::unique_ptr<T>> > m_resultData; //result key, buffer
 };
