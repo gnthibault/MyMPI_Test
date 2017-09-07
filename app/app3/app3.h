@@ -11,7 +11,7 @@
 //MPI
 #include <mpi.h>
 
-#define CLIENT_ID 0
+#define SERVER_ID 0
 #define REQUEST_TAG 5555
 #define RESULT_TAG 5556
 

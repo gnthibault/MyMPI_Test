@@ -21,6 +21,7 @@
 
 using RequestType=std::vector<int>;
 using ResultType=std::vector<int>;
+int nbParallelRun=3;
 
 int main(int argc, char* argv[]) {
   
@@ -29,7 +30,7 @@ int main(int argc, char* argv[]) {
   int world_rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
-  if(world_rank==CLIENT_ID){
+  if(world_rank==SERVER_ID){
     //Export start and end links to Hashmap
 
     //input data
@@ -42,7 +43,7 @@ int main(int argc, char* argv[]) {
                      request.cbegin(),request.cend()));}
     );
 
-    //Schedule Request to Servers
+    //Setup the work Server
     MPIWorkProvider<RequestType> provider(workQueue);
     std::cout<<"Test 1"<<std::endl;
     provider.provide();
@@ -64,13 +65,13 @@ int main(int argc, char* argv[]) {
       //TODO: blocking wait for a request (of unknown size) from rank 0
       RequestType request;
       MPI_Status status;
-      MPI_Probe(CLIENT_ID, REQUEST_TAG, MPI_COMM_WORLD, &status);
+      MPI_Probe(SERVER_ID, REQUEST_TAG, MPI_COMM_WORLD, &status);
       int reqSize;
       MPI_Get_count(&status, MPI_INT, &reqSize);
       if(reqSize > 0)
       {
         request.resize(reqSize);
-        MPI_Recv(request.data(), reqSize, MPI_INT, CLIENT_ID, REQUEST_TAG,
+        MPI_Recv(request.data(), reqSize, MPI_INT, SERVER_ID, REQUEST_TAG,
           MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         std::cout<<"Node: mpi request has been received"<<std::endl;
     
@@ -78,7 +79,7 @@ int main(int argc, char* argv[]) {
         ResultType result(10,1);
 
         std::cout<<"Node: mpi result waiting to be send"<<std::endl;
-        MPI_Send(result.data(), result.size(), MPI_INT, CLIENT_ID, RESULT_TAG,
+        MPI_Send(result.data(), result.size(), MPI_INT, SERVER_ID, RESULT_TAG,
           MPI_COMM_WORLD);
         std::cout<<"Node: mpi result has been sent"<<std::endl;
       }
