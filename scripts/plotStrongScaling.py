@@ -77,13 +77,14 @@ for dat,col in zip(datas,colors):
   x, miny, maxy, medy = map(np.array,zip(*sorted(zip(x, miny, maxy, medy))))
 
   #plot
-  ax.plot( x, medy, label=dat.name,c=col)
+  ax.plot( x, medy, label=dat.name, c=col)
   errBar=plt.fill_between(x, miny, maxy, facecolor=col, interpolate=True)
   errBar.set_alpha(errBarTransp)
   ax.add_collection(errBar)
   
 #Bla blah stuff
 ax.legend(loc=2,prop={'size':8})
+ax.xaxis.set_ticks(np.arange(1, nodes.max()+1, 1))
 ax.set_xlabel('Number of cores/nodes')
 ax.set_ylabel('Parallel efficiency')
 ax.set_title('Strong scaling experiments for the Dijkstra algorithm')

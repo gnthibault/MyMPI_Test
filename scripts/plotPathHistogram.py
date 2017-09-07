@@ -45,13 +45,14 @@ nbins=dat.ptp()
 fig, ax = plt.subplots()
 counts, bins, patches = plt.hist(dat, nbins, normed=1, facecolor='g', alpha=0.75)
 
-plt.xlabel('Number of endpoints')
+plt.xlabel('Number of links in path')
 plt.ylabel('Relative amount')
-plt.title('Histogram of SSSP problem size')
+plt.title('Histogram of SSSP path size')
 plt.grid(True)
 
 # Set the ticks to be at the edges of the bins.
 ax.set_xticks(bins)
+ax.xaxis.set_ticks(np.arange(bins.min(),bins.max(),50))#bins.ptp()/25))
 ax.yaxis.set_ticks(np.arange(0, 1, 0.05))
 # Set the xaxis's tick labels to be formatted with 1 decimal place...
 ax.xaxis.set_major_formatter(FormatStrFormatter('%0.1f'))

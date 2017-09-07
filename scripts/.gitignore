@@ -2,3 +2,5 @@ __pycache__
 figures
 *.sav
 links_counters.csv
+localrun.csv
+path.csv
