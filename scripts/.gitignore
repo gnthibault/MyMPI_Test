@@ -4,3 +4,5 @@ figures
 links_counters.csv
 localrun.csv
 path.csv
+DijkstraStronScaling24Threads.csv
+lasttmp.csv

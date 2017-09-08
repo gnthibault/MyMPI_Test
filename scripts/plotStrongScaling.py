@@ -89,6 +89,6 @@ ax.set_xlabel('Number of cores/nodes')
 ax.set_ylabel('Parallel efficiency')
 ax.set_title('Strong scaling experiments for the Dijkstra algorithm')
 ax.grid(True)
-mplio.save("DijkstraStrongScaling", ext="png", close=closePlot)
+mplio.save("DijkstraStrongScaling", ext="png", close=False)
 plt.show()
 plotIndex+=1
